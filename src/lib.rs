@@ -1,11 +1,18 @@
 use axum::routing::*;
-use std::net::SocketAddr;
+use std::net::TcpListener;
 
-pub async fn run() -> hyper::Result<()> {
+pub async fn run(listener: TcpListener) -> hyper::Result<()> {
     let app = Router::new().route("/health_check", get(health_check));
-    let addr: SocketAddr = "127.0.0.1:3000".parse().unwrap();
-    let server = axum::Server::bind(&addr).serve(app.into_make_service());
+    let server = axum::Server::from_tcp(listener)?.serve(app.into_make_service());
     server.await
+}
+
+/// bind 127.0.0.1:{port} and returns listener and local addr as string
+/// else panics
+pub fn bind_localhost(port: &str) -> (TcpListener, String) {
+    let listener = TcpListener::bind(format!("127.0.0.1:{port}")).unwrap();
+    let addr = listener.local_addr().unwrap().to_string();
+    (listener, addr)
 }
 
 // I am here for responding with 200 OK
