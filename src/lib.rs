@@ -1,8 +1,10 @@
-use axum::routing::*;
+use axum::{extract::Form, routing::*};
 use std::net::TcpListener;
 
 pub async fn run(listener: TcpListener) -> hyper::Result<()> {
-    let app = Router::new().route("/health_check", get(health_check));
+    let app = Router::new()
+        .route("/health_check", get(health_check))
+        .route("/subscriptions", post(subscribe));
     let server = axum::Server::from_tcp(listener)?.serve(app.into_make_service());
     server.await
 }
@@ -15,5 +17,16 @@ pub fn bind_localhost(port: &str) -> (TcpListener, String) {
     (listener, addr)
 }
 
-// I am here for responding with 200 OK
+/// responding with 200 OK
 async fn health_check() {}
+
+///
+async fn subscribe(req: Form<SubscribeRequest>) {
+    println!("subscribe name={} email={}", req.name, req.email);
+}
+
+#[derive(serde::Deserialize, Debug)]
+struct SubscribeRequest {
+    name: String,
+    email: String,
+}

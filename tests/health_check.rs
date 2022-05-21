@@ -1,7 +1,7 @@
 use reqwest::{self, StatusCode};
 
 #[tokio::test]
-async fn health_check() {
+async fn health_check_responds_ok_0_content_length() {
     let (listener, addr) = bitflips::bind_localhost("0");
     tokio::spawn(bitflips::run(listener));
     let response = reqwest::get(format!("http://{addr}/health_check"))
