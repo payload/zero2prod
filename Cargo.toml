@@ -1,0 +1,23 @@
+[package]
+name = "bitflips"
+version = "0.1.0"
+edition = "2021"
+
+[lib]
+path = "src/lib.rs"
+
+[dependencies]
+# axum
+# enabled features: form, http1, hyper/http1, json, matched-path, original-uri, query, serde_json, serde_urlencoded, tower-log, tower/log
+# disabled features: base64, headers, http2, multer, multipart, sha-1, tokio-tungstenite, ws
+axum = "0.5.6"
+hyper = "0.14.18"
+# tokio
+# enabled features: bytes, fs, full, io-std, io-util, libc, macros, memchr, mio/net, mio/os-ext, mio/os-poll, net, num_cpus, once_cell, parking_lot, process, rt, rt-multi-thread, signal, signal-hook-registry, socket2, sync, time, tokio-macros, winapi/consoleapi, winapi/namedpipeapi, winapi/threadpoollegacyapiset
+# disabled features: mio, stats, test-util, tracing, winapi
+tokio = { version = "1.18.2", features = ["full"] }
+
+[dev-dependencies]
+# reqwest
+# enabled features: __tls, default-tls, hyper-tls, native-tls-crate, tokio-native-tls
+reqwest = "0.11.10"
