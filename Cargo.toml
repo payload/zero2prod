@@ -19,6 +19,9 @@ serde = { version = "1.0.137", features = ["derive"] }
 # enabled features: bytes, fs, full, io-std, io-util, libc, macros, memchr, mio/net, mio/os-ext, mio/os-poll, net, num_cpus, once_cell, parking_lot, process, rt, rt-multi-thread, signal, signal-hook-registry, socket2, sync, time, tokio-macros, winapi/consoleapi, winapi/namedpipeapi, winapi/threadpoollegacyapiset
 # disabled features: mio, stats, test-util, tracing, winapi
 tokio = { version = "1.18.2", features = ["full"] }
+config = { version = "0.13.1", features = ["ron", "yaml"], default-features = false }
+uuid = { version = "1.0.0", features = ["v4"] }
+chrono = "0.4.19"
 
 [dev-dependencies]
 # reqwest
