@@ -1,6 +1,5 @@
 use axum::{routing::*, Extension};
-use sqlx::prelude::*;
-use std::{net::TcpListener, sync::Arc};
+use std::net::TcpListener;
 
 use crate::{routes::*, *};
 
@@ -8,7 +7,7 @@ pub async fn run(state: InitState) -> hyper::Result<()> {
     let app = Router::new()
         .route("/health_check", get(health_check))
         .route("/subscriptions", post(subscribe))
-        .layer(Extension(state.database_connection));
+        .layer(Extension(state.db_pool));
     let server = axum::Server::from_tcp(state.listener)?.serve(app.into_make_service());
     server.await
 }
@@ -16,18 +15,20 @@ pub async fn run(state: InitState) -> hyper::Result<()> {
 pub async fn init(settings: &Settings) -> InitState {
     let (listener, addr) = bind_localhost(settings.app.port);
     let connection_string = settings.database.connection_string();
-    let database_connection = Arc::new(sqlx::PgConnection::connect(&connection_string).await.expect("PgConnection::connect"));
+    let db_pool = sqlx::PgPool::connect(&connection_string)
+        .await
+        .expect("PgPool::connect");
     InitState {
         listener,
         addr,
-        database_connection,
+        db_pool,
     }
 }
 
 pub struct InitState {
     pub listener: TcpListener,
     pub addr: String,
-    pub database_connection: Arc<sqlx::PgConnection>,
+    pub db_pool: sqlx::PgPool,
 }
 
 /// bind 127.0.0.1:{port} and returns listener and local addr as string

@@ -1,6 +1,6 @@
-mod settings;
 mod routes;
+mod settings;
 mod startup;
 
-pub use startup::*;
 pub use settings::*;
+pub use startup::*;

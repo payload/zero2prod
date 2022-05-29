@@ -1,51 +1,68 @@
-use std::sync::Arc;
-
-use bitflips::Settings;
 use reqwest::{self, RequestBuilder, StatusCode};
-use sqlx::{prelude::*, PgConnection};
+use sqlx::PgPool;
 
-async fn spawn_app() -> (String, Arc<sqlx::PgConnection>, Settings) {
-    let mut settings = bitflips::get_settings_expect();
-    settings.app.port = 0;
-    let init_state = bitflips::init(&settings).await;
-    let endpoint = format!("http://{}/subscriptions", init_state.addr);
-    let connection = init_state.database_connection.clone();
-    tokio::spawn(bitflips::run(init_state));
-    (endpoint, connection, settings)
+struct TestApp {
+    address: String,
+    db_pool: PgPool,
+}
+
+impl TestApp {
+    async fn new() -> Self {
+        let mut settings = bitflips::get_settings_expect();
+        settings.app.port = 0;
+        let init_state = bitflips::init(&settings).await;
+        let address = init_state.addr.clone();
+        let db_pool = init_state.db_pool.clone();
+        tokio::spawn(bitflips::run(init_state));
+        Self { address, db_pool }
+    }
+
+    fn http(&self) -> reqwest::Client {
+        reqwest::Client::new()
+    }
+
+    fn url(&self, path: &str) -> String {
+        let address = &self.address;
+        format!("http://{address}{path}")
+    }
+
+    fn db(&self) -> &PgPool {
+        &self.db_pool
+    }
 }
 
 #[tokio::test]
 async fn subscribe_responds_ok_for_valid_form_data() {
-    let (subscriptions, _, settings) = spawn_app().await;
-    let mut connection = PgConnection::connect(&settings.database.connection_string()).await.expect("PgConnection::connect");
-
-    let client = reqwest::Client::new();
+    let app = TestApp::new().await;
     let valid_input = [
         (("name", "DenverCoder9"), ("email", "funny@valen.tine")),
         (("name", "funny@valen.tine"), ("email", "funny@valen.tine")),
     ];
 
     for input in valid_input {
-        let response = client
-            .post(&subscriptions)
+        let response = app
+            .http()
+            .post(&app.url("/subscriptions"))
             .form(&input)
             .send()
             .await
             .unwrap();
         assert_eq!(StatusCode::OK, response.status(), "{:?}", input);
 
-        let entry = sqlx::query!("SELECT email, name FROM subscriptions").fetch_one(&mut connection).await.expect("sqlx::query subscriptions");
-        assert_eq!(entry.name, input.0.1, "name");
-        assert_eq!(entry.email, input.1.1, "email");
+        let entry = sqlx::query!("SELECT name, email FROM subscriptions")
+            .fetch_one(app.db())
+            .await
+            .expect("sqlx::query subscriptions");
+        assert_eq!(entry.name, input.0 .1, "name");
+        assert_eq!(entry.email, input.1 .1, "email");
     }
 }
 
 #[tokio::test]
 async fn subscribe_responds_4xx_for_invalid_requests() {
-    let (endpoint, ..) = spawn_app().await;
-    let endpoint_ref = &endpoint;
+    let app = TestApp::new().await;
 
-    let request = || reqwest::Client::new().post(endpoint_ref);
+    let request = || app.http().post(app.url("/subscriptions"));
     let check = |req: RequestBuilder| async {
         let msg = format!("{:?}", req);
         let response = req.send().await.unwrap();

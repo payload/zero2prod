@@ -1,5 +1,3 @@
-
-
 use serde::Deserialize;
 
 #[derive(Deserialize, Debug)]
@@ -35,7 +33,14 @@ pub fn get_settings_expect() -> Settings {
 
 impl DatabaseSettings {
     pub fn connection_string(&self) -> String {
-        let Self { host, port, username, password, database_name, .. } = self;
+        let Self {
+            host,
+            port,
+            username,
+            password,
+            database_name,
+            ..
+        } = self;
         format!("postgres://{username}:{password}@{host}:{port}/{database_name}")
     }
 }

@@ -8,9 +8,7 @@ async fn health_check_responds_ok_0_content_length() {
     let health_check = format!("http://{}/health_check", init_state.addr);
     tokio::spawn(bitflips::run(init_state));
 
-    let response = reqwest::get(health_check)
-        .await
-        .unwrap();
+    let response = reqwest::get(health_check).await.unwrap();
     assert_eq!(StatusCode::OK, response.status());
     assert_eq!(Some(0), response.content_length());
 }

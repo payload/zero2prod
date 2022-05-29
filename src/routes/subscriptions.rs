@@ -1,21 +1,26 @@
-use std::sync::Arc;
+use axum::{extract::Form, http::StatusCode, Extension};
+use sqlx::PgPool;
 
-use axum::{extract::Form, Extension};
-use sqlx::{ prelude::*, PgConnection};
-
-///
-pub async fn subscribe(req: Form<SubscribeRequest>, conn: Extension<Arc<PgConnection>>) {
+pub async fn subscribe(req: Form<SubscribeRequest>, db: Extension<PgPool>) -> StatusCode {
     let uuid = sqlx::types::Uuid::from_bytes(*uuid::Uuid::new_v4().as_bytes());
 
     println!("subscribe name={} email={}", req.name, req.email);
-    let x = sqlx::query!(
-        r#"insert into subscriptions (id, email, name, subscribed_at) values ($1, $2, $3, $4)"#,
+    match sqlx::query!(
+        r#"insert into subscriptions (id, name, email, subscribed_at) values ($1, $2, $3, $4)"#,
         uuid,
-        req.email,
         req.name,
+        req.email,
         chrono::Utc::now()
-    );
-    println!("{:?}", x);
+    )
+    .execute(&*db)
+    .await
+    {
+        Ok(_) => StatusCode::OK,
+        Err(err) => {
+            eprintln!("subscribe failed: {err:?}");
+            StatusCode::INTERNAL_SERVER_ERROR
+        }
+    }
 }
 
 #[derive(serde::Deserialize, Debug)]
