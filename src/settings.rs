@@ -43,4 +43,15 @@ impl DatabaseSettings {
         } = self;
         format!("postgres://{username}:{password}@{host}:{port}/{database_name}")
     }
+
+    pub fn connection_string_no_db(&self) -> String {
+        let Self {
+            host,
+            port,
+            username,
+            password,
+            ..
+        } = self;
+        format!("postgres://{username}:{password}@{host}:{port}")
+    }
 }
