@@ -1,13 +1,18 @@
 use axum::{routing::*, Extension};
 use std::net::TcpListener;
+use tower::ServiceBuilder;
+use tower_http::trace::TraceLayer;
 
 use crate::{routes::*, *};
 
 pub async fn run(state: InitState) -> hyper::Result<()> {
+    let layers = ServiceBuilder::new()
+        .layer(TraceLayer::new_for_http())
+        .layer(Extension(state.db_pool));
     let app = Router::new()
         .route("/health_check", get(health_check))
         .route("/subscriptions", post(subscribe))
-        .layer(Extension(state.db_pool));
+        .layer(layers);
     let server = axum::Server::from_tcp(state.listener)?.serve(app.into_make_service());
     server.await
 }

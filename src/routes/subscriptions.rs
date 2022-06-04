@@ -4,7 +4,7 @@ use sqlx::PgPool;
 pub async fn subscribe(req: Form<SubscribeRequest>, db: Extension<PgPool>) -> StatusCode {
     let uuid = sqlx::types::Uuid::from_bytes(*uuid::Uuid::new_v4().as_bytes());
 
-    println!("subscribe name={} email={}", req.name, req.email);
+    log::info!("subscribe {req:?}");
     match sqlx::query!(
         r#"insert into subscriptions (id, name, email, subscribed_at) values ($1, $2, $3, $4)"#,
         uuid,
@@ -15,9 +15,12 @@ pub async fn subscribe(req: Form<SubscribeRequest>, db: Extension<PgPool>) -> St
     .execute(&*db)
     .await
     {
-        Ok(_) => StatusCode::OK,
+        Ok(_) => {
+            log::info!("subscribe done");
+            StatusCode::OK
+        },
         Err(err) => {
-            eprintln!("subscribe failed: {err:?}");
+            log::error!("subscribe error {err:?}");
             StatusCode::INTERNAL_SERVER_ERROR
         }
     }
