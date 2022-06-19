@@ -1,4 +1,5 @@
 use axum::{routing::*, Extension};
+use secrecy::ExposeSecret;
 use std::net::TcpListener;
 use tower::ServiceBuilder;
 use tower_http::trace::TraceLayer;
@@ -20,7 +21,7 @@ pub async fn run(state: InitState) -> hyper::Result<()> {
 pub async fn init(settings: &Settings) -> InitState {
     let (listener, addr) = bind_localhost(settings.app.port);
     let connection_string = settings.database.connection_string();
-    let db_pool = sqlx::PgPool::connect(&connection_string)
+    let db_pool = sqlx::PgPool::connect(connection_string.expose_secret())
         .await
         .expect("PgPool::connect");
     InitState {

@@ -1,6 +1,7 @@
 use bitflips::{init_tracing, new_tracing_subscriber, DatabaseSettings};
 use once_cell::sync::Lazy;
 use reqwest::{self, RequestBuilder, StatusCode};
+use secrecy::ExposeSecret;
 use sqlx::{prelude::*, Connection, PgConnection, PgPool};
 use tracing_subscriber::fmt::TestWriter;
 
@@ -43,7 +44,7 @@ impl TestApp {
 }
 
 async fn init_database(db_settings: &DatabaseSettings) {
-    let mut conn = PgConnection::connect(&db_settings.connection_string_no_db())
+    let mut conn = PgConnection::connect(db_settings.connection_string_no_db().expose_secret())
         .await
         .expect("postgres connection");
     let create_database = format!(r#"CREATE DATABASE "{}";"#, db_settings.database_name);
@@ -51,7 +52,7 @@ async fn init_database(db_settings: &DatabaseSettings) {
         .await
         .expect(&create_database);
 
-    let pool = PgPool::connect(&db_settings.connection_string())
+    let pool = PgPool::connect(db_settings.connection_string().expose_secret())
         .await
         .expect("database connection");
     sqlx::migrate!("./migrations")
