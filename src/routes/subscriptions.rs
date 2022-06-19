@@ -21,7 +21,7 @@ pub async fn subscribe(req: Form<SubscribeRequest>, db: Extension<PgPool>) -> St
         Ok(_) => {
             tracing::info!("subscribe done {uuid}");
             StatusCode::OK
-        },
+        }
         Err(err) => {
             if let sqlx::Error::Database(pg_err) = err {
                 tracing::error!("subscribe error: {}", pg_err.message());

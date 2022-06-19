@@ -1,6 +1,12 @@
-use bitflips::DatabaseSettings;
+use bitflips::{init_tracing, new_tracing_subscriber, DatabaseSettings};
+use once_cell::sync::Lazy;
 use reqwest::{self, RequestBuilder, StatusCode};
 use sqlx::{prelude::*, Connection, PgConnection, PgPool};
+use tracing_subscriber::fmt::TestWriter;
+
+static TRACING: Lazy<()> = Lazy::new(|| {
+    init_tracing(new_tracing_subscriber("test", "debug", TestWriter::new()));
+});
 
 struct TestApp {
     address: String,
@@ -9,6 +15,8 @@ struct TestApp {
 
 impl TestApp {
     async fn new() -> Self {
+        Lazy::force(&TRACING);
+
         let mut settings = bitflips::get_settings_expect();
         settings.database.database_name = format!("test:{}", uuid::Uuid::new_v4());
         settings.app.port = 0;
