@@ -1,2 +1,6 @@
-/// responding with 200 OK
-pub async fn health_check() {}
+use tracing::*;
+
+#[tracing::instrument]
+pub async fn health_check() -> axum::http::StatusCode {
+    axum::http::StatusCode::OK
+}

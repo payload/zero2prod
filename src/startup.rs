@@ -1,4 +1,5 @@
 use axum::{routing::*, Extension};
+use hyper::{Body, Request};
 use secrecy::ExposeSecret;
 use std::net::TcpListener;
 use tower::ServiceBuilder;
@@ -8,7 +9,9 @@ use crate::{routes::*, *};
 
 pub async fn run(state: InitState) -> hyper::Result<()> {
     let layers = ServiceBuilder::new()
-        .layer(TraceLayer::new_for_http())
+        .layer(TraceLayer::new_for_http().make_span_with(
+            |_: &Request<Body>| tracing::info_span!("request", request_id = %uuid::Uuid::new_v4()),
+        ))
         .layer(Extension(state.db_pool));
     let app = Router::new()
         .route("/health_check", get(health_check))

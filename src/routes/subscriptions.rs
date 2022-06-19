@@ -1,10 +1,7 @@
 use axum::{extract::Form, http::StatusCode, Extension};
 use sqlx::PgPool;
 
-#[tracing::instrument(skip_all, ret, fields(
-    request_id = %uuid::Uuid::new_v4(),
-    request = ?*req,
-))]
+#[tracing::instrument(skip_all, ret, fields(request = ?*req))]
 pub async fn subscribe(req: Form<SubscribeRequest>, db: Extension<PgPool>) -> StatusCode {
     match db_insert_subscription(&req, &*db).await {
         Ok(_) => StatusCode::OK,
